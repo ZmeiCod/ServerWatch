@@ -7,6 +7,8 @@ import './App.css'
 function App() {
   const [count, setCount] = useState(0)
 
+  console.log(import.meta.env.VITE_SOME_KEY)
+  
   return (
     <>
       <section id="center">

@@ -1,25 +1,29 @@
 version: '3.8'
 services:
 
-  client:
-    build: ../client
-    container_name: client
-    ports:
-      - '3000:3000'
-    working_dir: /app
-    volumes:
-      - ../client:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+   client:
+     build:
+       context: ../client
+       dockerfile: dockerfile
+     container_name: client
+     ports:
+       - '3000:3000'
+     working_dir: /app
+     volumes:
+       - ../client:/app
+       - /app/node_modules
+     environment:
+       - VITE_SOME_KEY=${VITE_SOME_KEY}
+     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
 
-  server:    
-    build: ../server
-    container_name: server    
-    ports:      
-      - '5000:5000'    
-    working_dir: /index
-    volumes:     
-      - ../server:/index      
-      - /index/node_modules
+   server:
+     build:
+       context: ../server
+       dockerfile: dockerfile
+     container_name: server
+     ports:
+       - '5000:5000'
+     working_dir: /app
+     volumes:
+       - ../server:/app
+       - /app/node_modules
