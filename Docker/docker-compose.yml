@@ -1,29 +1,65 @@
 version: '3.8'
+
 services:
+  client:
+    build:
+      context: ../client
+      dockerfile: dockerfile
+    container_name: client
+    ports:
+      - '3000:3000'
+    working_dir: /app
+    volumes:
+      - ../client:/app
+      - /app/node_modules
+    environment:
+      VITE_SOME_KEY: ${VITE_SOME_KEY}
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+    networks:
+      - monitoring-network
 
-   client:
-     build:
-       context: ../client
-       dockerfile: dockerfile
-     container_name: client
-     ports:
-       - '3000:3000'
-     working_dir: /app
-     volumes:
-       - ../client:/app
-       - /app/node_modules
-     environment:
-       - VITE_SOME_KEY=${VITE_SOME_KEY}
-     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+  server:
+    build:
+      context: ../server
+      dockerfile: dockerfile
+    container_name: server
+    ports:
+      - '5000:5000'
+    working_dir: /app
+    volumes:
+      - ../server:/app
+      - /app/node_modules
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_NAME}
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_NAME: ${POSTGRES_NAME}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASS: ${POSTGRES_PASSWORD}
+    depends_on:
+      - postgres
+    networks:
+      - monitoring-network
 
-   server:
-     build:
-       context: ../server
-       dockerfile: dockerfile
-     container_name: server
-     ports:
-       - '5000:5000'
-     working_dir: /app
-     volumes:
-       - ../server:/app
-       - /app/node_modules
+  postgres:
+    container_name: postgres
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_NAME} 
+    ports:
+      - 5433:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - monitoring-network
+
+volumes:
+  postgres_data:
+
+networks:
+  monitoring-network:
+    driver: bridge
